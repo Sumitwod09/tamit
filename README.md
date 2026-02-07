@@ -22,7 +22,7 @@ A private, minimalist social app for exactly 2 users built with Flutter and Supa
 ### 1. Clone or Navigate to Project
 
 ```bash
-cd c:\Users\Harshali\OneDrive\Desktop\tamit
+cd c:\Users\user\OneDrive\Desktop\tamit
 ```
 
 ### 2. Install Flutter Dependencies
