@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../models/post.dart';
 import '../services/post_service.dart';
-import '../services/auth_service.dart';
+
 import '../screens/feed/comments_screen.dart';
 import 'user_avatar.dart';
 
@@ -18,7 +18,7 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   final _postService = PostService();
-  final _authService = AuthService();
+
   late bool _isLiked;
   late int _likesCount;
 
