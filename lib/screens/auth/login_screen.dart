@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,12 +30,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final authService = AuthService();
-      
+
       if (_useMagicLink) {
-        await authService.signInWithMagicLink(email: _emailController.text.trim());
+        await authService.signInWithMagicLink(
+            email: _emailController.text.trim());
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Check your email for the login link!')),
+            const SnackBar(
+                content: Text('Check your email for the login link!')),
           );
         }
       } else {
@@ -98,7 +100,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       hintText: 'you@example.com',
                     ),
                     keyboardType: TextInputType.emailAddress,
-                    textInputAction: _useMagicLink ? TextInputAction.done : TextInputAction.next,
+                    textInputAction: _useMagicLink
+                        ? TextInputAction.done
+                        : TextInputAction.next,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
@@ -151,8 +155,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       setState(() => _useMagicLink = !_useMagicLink);
                     },
                     child: Text(
-                      _useMagicLink 
-                          ? 'Use password instead' 
+                      _useMagicLink
+                          ? 'Use password instead'
                           : 'Use magic link instead',
                     ),
                   ),

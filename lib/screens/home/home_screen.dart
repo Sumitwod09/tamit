@@ -32,7 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Avatar button to access profile
           if (currentUserId != null)
             FutureBuilder(
-              future: ProfileService().getProfile(currentUserId),
+              future: ProfileService().getProfileById(currentUserId),
               builder: (context, snapshot) {
                 final profile = snapshot.data;
                 return IconButton(
