@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'config/env.dart';
+
 import 'config/theme.dart';
 import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
@@ -10,10 +10,10 @@ import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Supabase
   await SupabaseService.initialize();
-  
+
   runApp(const ProviderScope(child: TamitApp()));
 }
 
@@ -45,7 +45,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    
+
     // Listen to auth state changes
     _authService.authStateChanges.listen((event) {
       if (mounted) {

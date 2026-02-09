@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/post.dart';
 import '../models/comment.dart';
 import 'supabase_service.dart';
@@ -16,9 +16,7 @@ class PostService {
         .select('*, profiles(*)')
         .order('created_at', ascending: false);
 
-    return (response as List)
-        .map((json) => Post.fromJson(json))
-        .toList();
+    return (response as List).map((json) => Post.fromJson(json)).toList();
   }
 
   // Create a post
@@ -55,13 +53,9 @@ class PostService {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = '$userId/post_$timestamp.jpg';
 
-    await _supabase.storage
-        .from('posts')
-        .upload(path, file);
+    await _supabase.storage.from('posts').upload(path, file);
 
-    return _supabase.storage
-        .from('posts')
-        .getPublicUrl(path);
+    return _supabase.storage.from('posts').getPublicUrl(path);
   }
 
   // Delete a post
@@ -121,9 +115,7 @@ class PostService {
         .eq('post_id', postId)
         .order('created_at', ascending: true);
 
-    return (response as List)
-        .map((json) => Comment.fromJson(json))
-        .toList();
+    return (response as List).map((json) => Comment.fromJson(json)).toList();
   }
 
   // Add a comment

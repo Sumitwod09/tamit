@@ -13,13 +13,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController(); // For Sign Up
   bool _isLoading = false;
+  bool _isSignUp = false; // Toggle between Sign In and Sign Up
   bool _useMagicLink = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -30,26 +33,68 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final authService = AuthService();
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
 
-      if (_useMagicLink) {
-        await authService.signInWithMagicLink(
-            email: _emailController.text.trim());
+      if (_isSignUp) {
+        // Sign Up Flow
+        await authService.signUp(
+          email: email,
+          password: password,
+          username: _usernameController.text.trim(),
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Check your email for the login link!')),
+                content: Text(
+                    'Account created! Please check your email to confirm.')),
           );
+          // Optionally switch to sign in or wait for email confirmation
+          setState(() => _isSignUp = false);
         }
       } else {
-        await authService.signInWithPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+        // Sign In Flow
+        if (_useMagicLink) {
+          await authService.signInWithMagicLink(
+            email: email,
+            password: password, // Passed to satisfy new signature
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Check your email for the login link!')),
+            );
+          }
+        } else {
+          await authService.signInWithPassword(
+            email: email,
+            password: password,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final authService = AuthService();
+      await authService.signInWithGoogle();
+      // Navigation is usually handled by auth state listener in main.dart or router
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google Sign In Error: ${e.toString()}')),
         );
       }
     } finally {
@@ -92,6 +137,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
 
+                  // Sign Up / Sign In Toggle Title
+                  Text(
+                    _isSignUp ? 'Create an Account' : 'Welcome Back',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Username field (Sign Up only)
+                  if (_isSignUp) ...[
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        hintText: 'Choose a username',
+                      ),
+                      textInputAction: TextInputAction.next,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a username';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Email field
                   TextFormField(
                     controller: _emailController,
@@ -100,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       hintText: 'you@example.com',
                     ),
                     keyboardType: TextInputType.emailAddress,
-                    textInputAction: _useMagicLink
+                    textInputAction: (_useMagicLink && !_isSignUp)
                         ? TextInputAction.done
                         : TextInputAction.next,
                     validator: (value) {
@@ -115,8 +190,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password field (only if not using magic link)
-                  if (!_useMagicLink) ...[
+                  // Password field (if not magic link or if signing up)
+                  if (!_useMagicLink || _isSignUp) ...[
                     TextFormField(
                       controller: _passwordController,
                       decoration: const InputDecoration(
@@ -128,6 +203,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
+                        }
+                        if (_isSignUp && value.length < 6) {
+                          return 'Password must be at least 6 characters';
                         }
                         return null;
                       },
@@ -145,19 +223,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_useMagicLink ? 'Send Magic Link' : 'Sign In'),
+                        : Text(_isSignUp
+                            ? 'Sign Up'
+                            : (_useMagicLink ? 'Send Magic Link' : 'Sign In')),
                   ),
                   const SizedBox(height: 16),
 
-                  // Toggle magic link
+                  // Google Sign In Button
+                  if (!_isSignUp && !_isLoading) ...[
+                    OutlinedButton.icon(
+                      onPressed: _handleGoogleSignIn,
+                      icon: const Icon(Icons
+                          .login), // Replace with proper Google logo if asset available
+                      label: const Text('Sign in with Google'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Toggle magic link (Sign In only)
+                  if (!_isSignUp)
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _useMagicLink = !_useMagicLink);
+                      },
+                      child: Text(
+                        _useMagicLink
+                            ? 'Use password instead'
+                            : 'Use magic link instead',
+                      ),
+                    ),
+
+                  // Toggle Sign Up / Sign In
                   TextButton(
                     onPressed: () {
-                      setState(() => _useMagicLink = !_useMagicLink);
+                      setState(() {
+                        _isSignUp = !_isSignUp;
+                        _useMagicLink = false; // Reset magic link on toggle
+                      });
                     },
                     child: Text(
-                      _useMagicLink
-                          ? 'Use password instead'
-                          : 'Use magic link instead',
+                      _isSignUp
+                          ? 'Already have an account? Sign In'
+                          : "Don't have an account? Sign Up",
                     ),
                   ),
                 ],
